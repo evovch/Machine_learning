@@ -115,15 +115,20 @@ plt.plot(h_var, [a*i + b for i in h_var], color='red')
 fig2 = plt.figure(2, figsize=(10,5)) # size in inches
 fig2.suptitle('Training process')
 
-axs3 = fig2.add_subplot(1, 2, 1)
+axs3 = fig2.add_subplot(1, 3, 1)
 axs3.plot(history.history['acc'])
 axs3.grid(True)
 axs3.set_title('acc')
 
-axs4 = fig2.add_subplot(1, 2, 2)
+axs4 = fig2.add_subplot(1, 3, 2)
 axs4.plot(history.history['mse'])
 axs4.grid(True)
 axs4.set_title('mse')
+
+axs5 = fig2.add_subplot(1, 3, 3)
+axs5.plot(history.history['loss'])
+axs5.grid(True)
+axs5.set_title('loss')
 
 # This should be called only once in the very end
 plt.show()
