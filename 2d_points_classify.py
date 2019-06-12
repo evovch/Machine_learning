@@ -58,12 +58,12 @@ model = keras.Model(inputs=input_layer, outputs=output_layer)
 
 model.compile(optimizer='SGD',
               loss='binary_crossentropy',
-              metrics=['accuracy'])
+              metrics=['acc', 'mse'])
 
 model.summary()
 
 # train
-model.fit(x_train, y_train, epochs=10)
+history = model.fit(x_train, y_train, epochs=10)
 
 # use
 y_test = model.predict(x_test)
@@ -74,12 +74,22 @@ y_test = model.predict(x_test)
 
 import matplotlib.pyplot as plt
 
-fig, axs = plt.subplots(1, 2)
-# remember, x0 is x coord., x1 is y ccordinate, y is color (somewhat z coordinate)
-axs[0].scatter(x_train[:,0], x_train[:,1], 1, y_train)
-axs[0].grid(True)
-axs[1].scatter(x_test[:,0], x_test[:,1], 1, y_test[:,0])
-axs[1].grid(True)
+# Figure 1
+# --------
+fig1 = plt.figure(1, figsize=(10,5)) # size in inches
+fig1.suptitle('2d points classify')
+
+# Remember that x0 is x coord., x1 is y coordinate,
+#               y is color (somewhat z coordinate)
+axs1 = fig1.add_subplot(1, 2, 1)
+axs1.scatter(x_train[:,0], x_train[:,1], 1, y_train)
+axs1.grid(True)
+axs1.set_title('Training data')
+
+axs2 = fig1.add_subplot(1, 2, 2)
+axs2.scatter(x_test[:,0], x_test[:,1], 1, y_test[:,0])
+axs2.grid(True)
+axs2.set_title('Test data')
 
 # Required to identify the necessary range on the horizontal axis of the plot
 min_x0_test = np.amin(x_test[:,0])
@@ -88,12 +98,32 @@ h_var = np.linspace(min_x0_test, max_x0_test)
 
 weights = model.get_weights()[0]
 biases = model.get_weights()[1]
-print(weights)
-print(biases)
+###print(weights)
+###print(biases)
 
 a = -weights[0]/weights[1]
 b = -biases[0]/weights[1]
 
 plt.plot(h_var, [a*i + b for i in h_var], color='red')
 
+# ======================================
+# Plot training process graphs
+# ======================================
+
+# Figure 2
+# --------
+fig2 = plt.figure(2, figsize=(10,5)) # size in inches
+fig2.suptitle('Training process')
+
+axs3 = fig2.add_subplot(1, 2, 1)
+axs3.plot(history.history['acc'])
+axs3.grid(True)
+axs3.set_title('acc')
+
+axs4 = fig2.add_subplot(1, 2, 2)
+axs4.plot(history.history['mse'])
+axs4.grid(True)
+axs4.set_title('mse')
+
+# This should be called only once in the very end
 plt.show()
