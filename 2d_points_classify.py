@@ -62,11 +62,14 @@ model.compile(optimizer='SGD',
 
 model.summary()
 
-# train
+# Train
 history = model.fit(x_train, y_train, epochs=10)
 
-# use
+# Use
 y_test = model.predict(x_test)
+
+# Save the trained model to disk
+model.save("2d_points_clas_model.h5")
 
 # ======================================
 # Plot training and test data
@@ -112,23 +115,26 @@ plt.plot(h_var, [a*i + b for i in h_var], color='red')
 
 # Figure 2
 # --------
-fig2 = plt.figure(2, figsize=(10,5)) # size in inches
+fig2 = plt.figure(2, figsize=(15,5)) # size in inches
 fig2.suptitle('Training process')
 
 axs3 = fig2.add_subplot(1, 3, 1)
 axs3.plot(history.history['acc'])
 axs3.grid(True)
 axs3.set_title('acc')
+axs3.set_ylim([0., 1.01])
 
 axs4 = fig2.add_subplot(1, 3, 2)
 axs4.plot(history.history['mse'])
 axs4.grid(True)
 axs4.set_title('mse')
+axs4.set_ylim([0., None])
 
 axs5 = fig2.add_subplot(1, 3, 3)
 axs5.plot(history.history['loss'])
 axs5.grid(True)
 axs5.set_title('loss')
+axs5.set_ylim([0., None])
 
 # This should be called only once in the very end
 plt.show()
