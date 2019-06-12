@@ -45,7 +45,9 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from keras.utils import np_utils
 
-# Convert training outputs into one-hot format
+# Convert training outputs into one-hot format.
+# This might be useful if you plan to play with different
+# NN structures, optimizers, activation and loss functions.
 y_train_one_hot = np_utils.to_categorical(y_train)
 
 input_layer = keras.Input(shape=(2,))
@@ -67,13 +69,14 @@ model.fit(x_train, y_train, epochs=10)
 y_test = model.predict(x_test)
 
 # ======================================
-# Plot training and testdata
+# Plot training and test data
 # ======================================
 
 import matplotlib.pyplot as plt
 
 fig, axs = plt.subplots(1, 2)
-axs[0].scatter(x_train[:,0], x_train[:,1], 1, y_train) # remember, x0 is x coord., x1 is y ccordinate, y is color (somewhat z coordinate)
+# remember, x0 is x coord., x1 is y ccordinate, y is color (somewhat z coordinate)
+axs[0].scatter(x_train[:,0], x_train[:,1], 1, y_train)
 axs[0].grid(True)
 axs[1].scatter(x_test[:,0], x_test[:,1], 1, y_test[:,0])
 axs[1].grid(True)
