@@ -1,10 +1,7 @@
 # ======================================
-# x is input (2D)
-# x0 is x coordinate
-# x1 is y coordinate
-# y is output (1D)
-# f is input object class (color)
-# a is prediction (activation)
+# The goal is to train a neural network
+# which identifies horizonal lines out 
+# of a bunch of random lines
 # ======================================
 
 import numpy as np
@@ -41,76 +38,99 @@ def DrawTrainingHistory(fig_idx, p_history):
     axs3.set_title('loss')
     axs3.set_ylim([0., None])
 
+# ======================================
+# Plot training and test data
+# ======================================
 def DrawData(fig_idx, p_x, p_y, title):
 
+    # Calculate angles and lengths
+    n = len(p_x)
+    radToDeg = 180. / np.pi
+    alphas = np.zeros([n])
+    lengths = np.zeros([n])
+    for i in range(n):
+        dx0 = p_x[i][2] - p_x[i][0] # aka dx coordinate
+        dx1 = p_x[i][3] - p_x[i][1] # aka dy coordinate
+        alphas[i] = radToDeg * np.arctan(dx1/dx0) # line inclination angle
+        lengths[i] = np.sqrt(dx0*dx0+dx1*dx1)
+
     # Separate true from false
-    x_true = p_x[p_y[:,0]==1]
-    x_false = p_x[p_y[:,0]==0]
+    alpha_true = alphas[p_y[:,0]==1]
+    alpha_false = alphas[p_y[:,0]==0]
+    lengths_true = lengths[p_y[:,0]==1]
+    lengths_false = lengths[p_y[:,0]==0]
 
     # Plot
     fig = plt.figure(fig_idx, figsize=(10,5)) # size in inches
     fig.suptitle(title)
 
-    # Remember that x0 is x coord., x1 is y coordinate,
-    #               y is color (somewhat z coordinate)
+    # Used range is [-90;90]
     axs1 = fig.add_subplot(1, 2, 1)
-    axs1.scatter(x_true[:,0], x_true[:,1], 1, 'red')
+    ###axs1.hist(alphas, bins=100, range=[-100., 100.])
+    axs1.scatter(alpha_true, lengths_true, 1, 'red')
     axs1.grid(True)
     axs1.set_title('True')
-    axs1.set_xlim([-0.5, 1.5])
-    axs1.set_ylim([-0.5, 1.5])
+    axs1.set_xlim([-100., 100.])
+    axs1.set_ylim([-0.5, 2.0])
 
     axs2 = fig.add_subplot(1, 2, 2)
-    axs2.scatter(x_false[:,0], x_false[:,1], 1, 'blue')
+    ###axs2.hist(lengths, bins=20)
+    axs2.scatter(alpha_false, lengths_false, 1, 'blue')
     axs2.grid(True)
     axs2.set_title('False')
-    axs2.set_xlim([-0.5, 1.5])
-    axs2.set_ylim([-0.5, 1.5])
+    axs2.set_xlim([-100., 100.])
+    axs2.set_ylim([-0.5, 2.0])
 
 # ======================================
-# Plot training and test data
+# Plot individual training data samples
 # ======================================
-def DrawData2(fig_idx, x_train, y_train, x_test, y_test, title):
+def DrawIndividualSamplesLine(fig_idx, p_x, p_y):
+
+    limit = 500
 
     fig = plt.figure(fig_idx, figsize=(10,5)) # size in inches
-    fig.suptitle(title)
+    fig.suptitle('Data samples')
 
-    # Remember that x0 is x coord., x1 is y coordinate,
-    #               y is color (somewhat z coordinate)
-    axs1 = fig.add_subplot(1, 2, 1)
-    axs1.scatter(x_train[:,0], x_train[:,1], 1, y_train[:,0])
-    axs1.grid(True)
-    axs1.set_title('Training data')
+    axsT = fig.add_subplot(1, 2, 1)
+    axsF = fig.add_subplot(1, 2, 2)
 
-    axs2 = fig.add_subplot(1, 2, 2)
-    axs2.scatter(x_test[:,0], x_test[:,1], 1, y_test[:,0])
-    axs2.grid(True)
-    axs2.set_title('Test data')
+    counterTrue = 0
+    counterFalse = 0
 
-    # Required to identify the necessary range on the horizontal axis of the plot
-    min_x0_test = np.amin(x_test[:,0])
-    max_x0_test = np.amax(x_test[:,0])
-    h_var = np.linspace(min_x0_test, max_x0_test)
+    for i in range(len(p_y)):
+        edge_p = np.linspace(0., 1., 2)
+        if (p_y[i][0] == 1):
+            if (counterTrue < limit):
+                axsT.plot(p_x[i][0] + (p_x[i][2]-p_x[i][0])*edge_p,
+                          p_x[i][1] + (p_x[i][3]-p_x[i][1])*edge_p)
+                counterTrue+=1
 
-    weights = model.get_weights()[0]
-    biases = model.get_weights()[1]
-    ###print(weights)
-    ###print(biases)
+        else:
+            if (counterFalse < limit):
+                axsF.plot(p_x[i][0] + (p_x[i][2]-p_x[i][0])*edge_p,
+                          p_x[i][1] + (p_x[i][3]-p_x[i][1])*edge_p)
+                counterFalse+=1
 
-    a = -weights[0]/weights[1]
-    b = -biases[0]/weights[1]
 
-    plt.plot(h_var, [a*i + b for i in h_var], color='red')
+    axsT.grid(True)
+    axsT.set_title('true')
+    axsF.grid(True)
+    axsF.set_title('false')
 
 # ==============================================================================
 
-def GenDataSetPoint(n, xc, sigma):
-    x = np.zeros([n_train, 2])
-    y = np.zeros([n_train, 1])
-    for i in range(n_train):
+def GenDataSetLine(n):
+    x = np.zeros([n, 4])
+    y = np.zeros([n, 1])
+    for i in range(n):
         f = rnd.choice([0,1])
-        x[i] = [rnd.gauss(0., sigma) + xc[f*2+0],
-                rnd.gauss(0., sigma) + xc[f*2+1]]
+        if (f==0): # not horizontal line
+            x[i] = [rnd.uniform(0., 1.), rnd.uniform(0., 1.),
+                    rnd.uniform(0., 1.), rnd.uniform(0., 1.)]
+        else: # horizontal line
+            tmp = rnd.uniform(0., 1.)
+            x[i] = [rnd.uniform(0., 1.), tmp,
+                    rnd.uniform(0., 1.), tmp]
         y[i] = [f]
     return x, y
 
@@ -132,17 +152,15 @@ def PostProcess(a_test, threshold):
 # Prepare training and test data
 # ======================================
 
-###n_output_classes = 2 # number of clusters
-xc = [0.25, 0.25, 0.75, 0.75] # centers of the clusters
-sigma = 0.1 # width of the clusters
+###n_output_classes = 2 # two possible outcomes - horizontal line / not horizontal line
 
 # training data
-n_train = 1000000
-x_train, y_train = GenDataSetPoint(n_train, xc, sigma)
+n_train = 100000
+x_train, y_train = GenDataSetLine(n_train)
 
 # test data
-n_test = 10000000
-x_test, y_test = GenDataSetPoint(n_test, xc, sigma)
+n_test = 10000
+x_test, y_test = GenDataSetLine(n_test)
 
 # ==============================================================================
 
@@ -154,11 +172,11 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import optimizers
-from keras.utils import np_utils
+#from keras.utils import np_utils
 
-input_layer = keras.Input(shape=(2,))
-# hidden_layer_1 = layers.Dense(2, activation='relu')(input_layer)
-output_layer = layers.Dense(1, activation='sigmoid')(input_layer)
+input_layer = keras.Input(shape=(4,))
+hidden_layer_1 = layers.Dense(2, activation='tanh')(input_layer)
+output_layer = layers.Dense(1, activation='sigmoid')(hidden_layer_1)
 
 optim = optimizers.SGD(lr=1.0)
 
@@ -170,15 +188,15 @@ model.compile(optimizer=optim,
 
 if (LoadModel==True):
     # Load the trained model from disk
-    model.load_weights("2d_points_clas_model.h5")
+    model.load_weights("2d_lines_clas_model.h5")
 else:
     # Train
     history = model.fit(x_train,
                         y_train,
-                        batch_size=100,
-                        epochs=5)
+    #                    batch_size=100,
+                        epochs=20)
     # Save the trained model to disk
-    model.save("2d_points_clas_model.h5")
+    model.save_weights("2d_lines_clas_model.h5")
 
     DrawTrainingHistory(1, history)
 
@@ -202,7 +220,10 @@ print('MSE on the test data: ', MSE)
 # ======================================
 
 DrawData(2, x_train, y_train, 'Train data')
-DrawData(3, x_test, a_test_pro, 'Test data')
+DrawData(3, x_test, y_test, 'Test data')
+DrawData(4, x_test, a_test_pro, 'Test data prediction')
+DrawIndividualSamplesLine(5, x_train, y_train)
+DrawIndividualSamplesLine(6, x_test, a_test_pro)
 
 # ===============================================
 # This should be called only once in the very end
